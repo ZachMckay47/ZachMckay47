@@ -30,7 +30,7 @@ jobs:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
           GITLAB_PROJECT_IDS: ${{ secrets.GITLAB_PROJECT_IDS }}
           GITLAB_AUTHOR_EMAILS: ${{ secrets.GITLAB_AUTHOR_EMAILS }}
-        run: python3 scripts/gitlab_activity.py
+        run: python3 .github/workflows/scripts/gitlab_activity.py
 
       - name: Commit chart update
         run: |
