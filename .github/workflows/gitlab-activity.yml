@@ -1,0 +1,45 @@
+name: Update GitLab activity
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * 0'
+      timezone: America/Toronto
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitlab-profile-activity
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Check out profile repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Generate aggregate activity chart
+        env:
+          GITLAB_URL: ${{ secrets.GITLAB_URL }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_PROJECT_IDS: ${{ secrets.GITLAB_PROJECT_IDS }}
+          GITLAB_AUTHOR_EMAILS: ${{ secrets.GITLAB_AUTHOR_EMAILS }}
+        run: python3 scripts/gitlab_activity.py
+
+      - name: Commit chart update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- assets/gitlab-activity.svg
+          if git diff --cached --quiet; then
+            echo 'No chart changes.'
+            exit 0
+          fi
+          git commit -m 'Update GitLab activity chart'
+          git push origin HEAD
