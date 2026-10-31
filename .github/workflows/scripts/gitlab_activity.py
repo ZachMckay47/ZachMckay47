@@ -52,8 +52,12 @@ class GitLab:
         except HTTPError as error:
             # Never print response bodies, request URLs, or private resource names.
             raise SetupError(f'GitLab returned HTTP {error.code}. Check token scope, expiry, project access, and SSO/API settings.') from None
-        except (URLError, TimeoutError, OSError):
-            raise SetupError('Cannot reach GitLab securely. Check runner network access, hostname, and TLS certificate trust.') from None
+        except (URLError, TimeoutError, OSError) as error:
+            reason = getattr(error, 'reason', error)
+            raise SetupError(
+                f'GitLab connection failed: {type(reason).__name__} '
+                f'(errno={getattr(reason, "errno", None)}).'
+            ) from None
         except (ValueError, UnicodeError):
             raise SetupError('GitLab did not return valid JSON. Check the base URL and any sign-in proxy.') from None
 
